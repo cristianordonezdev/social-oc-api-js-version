@@ -51,6 +51,7 @@ const controller = {
                         } else {
 
                             const token = jwb.sign({
+                                uuid: rows[0].uuid,
                                 name: rows[0].name,
                                 lastname: rows[0].lastname,
                                 nickname: rows[0].nickname,
