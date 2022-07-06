@@ -124,6 +124,13 @@ const controller = {
                         if (err) return response.status(400).send({
                             message: err
                         })
+                        const follow = {
+                            uuid: uuid.v4(),
+                            user_follower_uuid: new_user.uuid,
+                            user_followed_uuid: new_user.uuid,
+                        }
+            
+                        con.query('INSERT INTO followers SET ? ', [follow])
 
                         return response.status(200).send({
                             status: 'ok',
