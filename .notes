@@ -1,1 +1,5 @@
 TO GET INFORMATION FROM MY DATABASE, CREDENTIALS heroku config --app backend-socialoc
+
+heroku config:set USER_DB='VALUE' --app socialocapi
+
+TO CONFIG OUR ENV IN HEROKU

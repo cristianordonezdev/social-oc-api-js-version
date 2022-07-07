@@ -43,10 +43,12 @@ app.use(cors(corsOptions));
 // ROUTES
 const middleware_token = require('./middlewares/validateToken');
 const auth_routes = require('./routes/authRoutes');
-const main_routes = require('./routes/mainRoutes');
+const post_routes = require('./routes/postRoutes');
+const user_routes = require('./routes/userRoutes');
 
 app.use('/api/auth', auth_routes);
-app.use('/api/dashboard', middleware_token, main_routes);
+app.use('/api/dashboard/posts', middleware_token, post_routes);
+app.use('/api/dashboard/user', middleware_token, user_routes);
 
 // EXPORTING
 module.exports = app;

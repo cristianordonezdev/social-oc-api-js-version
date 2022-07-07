@@ -124,17 +124,30 @@ const controller = {
                         if (err) return response.status(400).send({
                             message: err
                         })
+
+                        // ADDING AUTOFOLLOW TO SHOW OWN POST
                         const follow = {
                             uuid: uuid.v4(),
                             user_follower_uuid: new_user.uuid,
                             user_followed_uuid: new_user.uuid,
                         }
-            
                         con.query('INSERT INTO followers SET ? ', [follow])
 
-                        return response.status(200).send({
-                            status: 'ok',
-                            message: 'Added successfully',
+                        // GETTING TOKEN FOR AUTOSIGN
+                        const token = jwb.sign({
+                            uuid: new_user.uuid,
+                            name: new_user.name,
+                            lastname: new_user.lastname,
+                            nickname: new_user.nickname,
+                            gender: new_user.gender,
+                            email: new_user.email,
+                            roll: new_user.roll,
+                        }, process.env.TOKEN_SECRET);
+
+                        response.header('auth-token', token).json({
+                            error: null,
+                            data: {token},
+                            message: 'Welcome!'
                         })
                     });
                 } else {

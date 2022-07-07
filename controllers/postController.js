@@ -36,82 +36,90 @@ const mainController = {
                     }
                     return urls
             }
-            uploadImage(request).then((res) => {
-                const images_urls = []
 
-                res.map((item) => {
-                    images_urls.push(item.url)
+            const new_post = {
+                uuid: uuid.v4(),
+                user_uuid: request.body.user_uuid,
+                caption: (request.body.caption) ? request.body.caption: '',
+                images: '',
+                created_at: new Date(),
+                updated_at: new Date()
+            }
+            con.query('INSERT INTO posts SET ?', [new_post], (err, rows) => {
+                if (err) return response.status(400).send({
+                    message: err
                 })
-
-                const new_post = {
-                    uuid: uuid.v4(),
-                    user_uuid: request.body.user_uuid,
-                    caption: (request.body.caption) ? request.body.caption: '',
-                    images: images_urls.toString(),
-                    created_at: new Date(),
-                    updated_at: new Date()
-                }
-
-                con.query('INSERT INTO posts SET ?', [new_post], (err, rows) => {
-                    if (err) return response.status(400).send({
-                        message: err
+        
+                uploadImage(request).then((res) => {
+                    const images_urls = []
+    
+                    res.map((item) => {
+                        images_urls.push(item.url)
                     })
-            
+                    const post_updated = {
+                        images: images_urls.toString()
+                    }
+                    con.query('UPDATE posts SET ? WHERE uuid = ?', [post_updated, new_post.uuid])
+
                     return response.status(200).send({
                         message: 'added post',
                         rows
                     });
-                });
-            })
+                })
+
+            });
+
         });
     },
 
-    follow: (request, response) => {
+    editPost: (request, response) => {
         request.getConnection((err, con) => {
             if (err) return response.status(400).send({
                 message: err
             })
-            
             const params = request.body;
+            const post_updated = {
+                caption: (params.caption) ? params.caption : null,
+                tagged: (params.tagged) ? params.tagged : null,
+                updated_at: new Date()
+            }
 
-            con.query('SELECT * FROM followers WHERE user_follower_uuid = ? and user_followed_uuid = ?', [params.user_follower_uuid, params.user_followed_uuid], (err, rows) => {
+            con.query('UPDATE posts SET ? WHERE uuid = ?', [post_updated, params.uuid], (err, rows) => {
                 if (err) return response.status(400).send({
                     message: err
                 })
 
-                if (rows.length >= 1) {
-
-                    con.query('DELETE FROM followers WHERE user_follower_uuid = ? and user_followed_uuid = ? ', [params.user_follower_uuid, params.user_followed_uuid], (err, rows) => {
-                        if (err) return response.status(400).send({
-                            message: err
-                        })
-                
-                        return response.status(200).send({
-                            message: 'Unfollow',
-                            rows
-                        });
-                    })
-
-                } else {
-                    const follow = {
-                        uuid: uuid.v4(),
-                        user_follower_uuid: params.user_follower_uuid,
-                        user_followed_uuid: params.user_followed_uuid,
-                    }
-        
-                    con.query('INSERT INTO followers SET ? ', [follow], (err, rows) => {
-                        if (err) return response.status(400).send({
-                            message: err
-                        })
-                
-                        return response.status(200).send({
-                            message: 'Following',
-                            rows
-                        });
-                    })
-                }
+                return response.status(200).send({
+                    message: 'Updated successfully'
+                })
             })
+        });
+    },
 
+    deletePost: (request, response) => {
+        request.getConnection((err, con) => {
+            if (err) return response.status(400).send({
+                message: err
+            })
+            const params = request.body;
+
+            con.query('SELECT images FROM posts WHERE uuid = ?', [params.uuid], (err, rows) => {
+                console.log(rows)
+                const images = rows[0].images.split(',');
+                images.forEach((item) => {
+                    const deleter = async (path) => await cloudinary.delete(path);
+                    deleter(`socialOC/${item.split('/')[8].split('.')[0]}`)
+                })
+            });
+            con.query('DELETE FROM posts WHERE uuid = ?', [params.uuid], (err, rows) => {
+                if (err) return response.status(400).send({
+                    message: err
+                })
+
+                return response.status(200).send({
+                    message: 'Deleted successfully'
+                })
+            })
 
         });
     },
@@ -131,7 +139,7 @@ const mainController = {
 
                 if (rows.length >= 1) {
 
-                    con.query('DELETE FROM users WHERE post_uuid = ? and user_uuid = ? ', [arams.post_uuid, params.user_uuid], (err, rows) => {
+                    con.query('DELETE FROM likes WHERE post_uuid = ? and user_uuid = ? ', [params.post_uuid, params.user_uuid], (err, rows) => {
                         if (err) return response.status(400).send({
                             message: err
                         })
@@ -167,7 +175,7 @@ const mainController = {
         });
     },
 
-    getPost: (request, response) => {
+    getPostFollowers: (request, response) => {
         request.getConnection((err, con) => {
             if (err) return response.status(400).send({
                 message: err
@@ -185,7 +193,10 @@ const mainController = {
             })
 
         });
-    }
+    },
+
+
+    //OBTENER LISTA DE FOLLOWERS Y LISTA DE FOLLOW 
 }
 
 
