@@ -55,27 +55,29 @@ const controller = {
         request.getConnection((err, con) => {
             if (err) return response.status(400).send({
                 message: err
-            })
+            });
 
-            con.query('SELECT * FROM users WHERE uuid = ? ', [request.body.uuid], (err, rows) => {
+            const uuid = request.params.uuid;
+
+            con.query('SELECT * FROM users WHERE uuid = ? ', [uuid], (err, rows) => {
                 if (err) return response.status(400).send({
                     message: err
                 });
                 let user = rows[0];
                 delete user.password
 
-                con.query('SELECT * FROM followers WHERE user_follower_uuid = ? ', [request.body.uuid], (err, rows) => {
+                con.query('SELECT * FROM followers WHERE user_follower_uuid = ? ', [uuid], (err, rows) => {
                     user['following'] = rows.length - 1
                 })
-                con.query('SELECT * FROM followers WHERE user_followed_uuid = ? ', [request.body.uuid], (err, rows) => {
+                con.query('SELECT * FROM followers WHERE user_followed_uuid = ? ', [uuid], (err, rows) => {
                     user['followers'] = rows.length - 1
                 })
 
-                con.query('SELECT * FROM posts WHERE user_uuid = ? ', [request.body.uuid], (err, rows) => {
+                con.query('SELECT * FROM posts WHERE user_uuid = ? ', [uuid], (err, rows) => {
                     if (err) return response.status(400).send({
                         message: err
                     });
-
+                    user['number_post'] = rows.length;
                     user['posts'] = rows;
                     return response.status(200).send({
                         status: 'ok',
@@ -86,6 +88,52 @@ const controller = {
 
         });
     },
+
+    followersList: (request, response)=> {
+        request.getConnection((err, con) => {
+            if (err) return response.status(400).send({
+                message: err
+            });
+
+
+            const params = request.params;
+            
+            con.query('SELECT U.uuid, U.name, U.nickname, U.profile_image FROM users U JOIN followers F ON U.uuid = F.user_follower_uuid AND F.user_followed_uuid = ?', [params.uuid], (err, rows) => {
+                if (err) return response.status(400).send({
+                    message: err
+                });
+
+                const followers_list = rows.filter((item) => item.uuid !== params.uuid)                
+                return response.status(200).send({
+                    message: 'ok',
+                    followers_list
+                });
+            })
+        });
+    },
+
+    followingList: (request, response)=> {
+        request.getConnection((err, con) => {
+            if (err) return response.status(400).send({
+                message: err
+            });
+
+
+            const params = request.params;
+            
+            con.query('SELECT U.uuid, U.name, U.nickname, U.profile_image FROM users U JOIN followers F ON U.uuid = F.user_followed_uuid AND F.user_follower_uuid = ?', [params.uuid], (err, rows) => {
+                if (err) return response.status(400).send({
+                    message: err
+                });
+
+                const followers_list = rows.filter((item) => item.uuid !== params.uuid)                
+                return response.status(200).send({
+                    message: 'ok',
+                    followers_list
+                });
+            })
+        });
+    }
 }
 
 module.exports = controller;

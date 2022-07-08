@@ -181,22 +181,37 @@ const mainController = {
                 message: err
             })
 
-            con.query('SELECT P.uuid, P.user_uuid, P.caption, P.images, P.tagged, P.updated_at, P.created_at FROM posts P JOIN followers F ON P.user_uuid = F.user_followed_uuid AND F.user_follower_uuid = ?', [request.body.user_uuid], (err, rows) => {
+            con.query('SELECT P.uuid, P.user_uuid, P.caption, P.images, P.tagged, P.updated_at, P.created_at FROM posts P JOIN followers F ON P.user_uuid = F.user_followed_uuid AND F.user_follower_uuid = ?', [request.params.user_uuid], (err, rows) => {
                 if (err) return response.status(400).send({
                     message: err
                 });
 
-                return response.status(200).send({
-                    status: 'ok',
-                    rows
-                });
+                const new_rows = [];
+                let counter = 0;
+                rows.forEach((item) => {
+                    con.query('SELECT name, profile_image FROM users WHERE uuid = ?', [item.user_uuid], (err, rows2) => {
+                        if (err) return response.status(400).send({
+                            message: err
+                        });
+                        
+                        item['user_name'] = rows2[0].name;
+                        item['user_profile_image'] = rows2[0].profile_image;
+                        new_rows.push(item)
+                        counter += 1 
+                        
+                        if(rows.length === counter) {
+                            return response.status(200).send({
+                                status: 'ok',
+                                new_rows
+                            });
+                        } 
+                    })
+
+                })          
             })
 
         });
     },
-
-
-    //OBTENER LISTA DE FOLLOWERS Y LISTA DE FOLLOW 
 }
 
 
