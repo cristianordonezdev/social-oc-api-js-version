@@ -1,4 +1,5 @@
 const uuid = require('uuid');
+const validator = require('validator');
 
 const controller = {
     follow: (request, response) => {
@@ -132,6 +133,56 @@ const controller = {
                     followers_list
                 });
             })
+        });
+    },
+
+    editUser: (request, response) => {
+        request.getConnection((err, con) => {
+            if (err) return response.status(400).send({
+                message: err
+            });
+
+            const params = request.body;
+            const name = (params.name) ? !validator.isEmpty(params.name) : true;
+            const lastname = (params.lastname) ? !validator.isEmpty(params.lastname) : true;
+            const nickname = (params.nickname) ? !validator.isEmpty(params.nickname) : true;
+            const gender = (params.gender) ? !validator.isEmpty(params.gender) : true;
+            const email = (params.email) ? !validator.isEmpty(params.email) && validator.isEmail(params.email) : true;
+
+            if (name && lastname && nickname && gender && email) {
+                con.query('SELECT * FROM users WHERE email = ? ', [params.email], (err, rows) => {
+                    if (rows.length >= 1) {
+                        if ((rows[0].uuid !== params.uuid) && rows[0].email === params.email) {
+                            return response.status(400).send({
+                                message: 'Already in use that email'
+                            });
+                        }
+                    }
+                });
+
+                const user_updated = {
+                    name: params.name,
+                    lastname: params.lastname,
+                    nickname: params.nickname,
+                    gender: params.gender,
+                    email: params.email,
+                };
+            
+                con.query('UPDATE users SET ? WHERE uuid = ? ', [user_updated, params.uuid], (err, rows) => {
+                    if (err) return response.status(400).send({
+                        err
+                    });  
+
+                    return response.status(400).send({
+                        status: 'ok',
+                        rows
+                    });
+                })
+            } else {
+                return response.status(400).send({
+                    message: 'Data is incomplete'
+                });
+            }
         });
     }
 }
