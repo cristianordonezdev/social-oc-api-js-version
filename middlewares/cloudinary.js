@@ -24,7 +24,12 @@ exports.uploads = (file, folder) => {
     });
 }
 exports.delete = (file) => {
-    cloudinary.v2.uploader.destroy(file, (error, result) => {
-        console.log(result, error, 'an errpr')
-    });
+    cloudinary.api.delete_resources(file, (result) => { 
+        console.log(result)
+        if (result.deleted[file] === 'not_found') {
+            cloudinary.api.delete_resources(file,
+                function(result){console.log(result)}, { resource_type: "video" });
+        }
+    })
+
 }

@@ -20,11 +20,26 @@ const mainController = {
             if (err) return response.status(400).send({
                 message: err
             })
-            
+            const files = request.files;
+
+            //CHECKING IF THE FILES IS TOO BIG
+            let is_too_big = false;
+            for(const file of files) {
+                if(file.size > 5000000) 
+                    is_too_big = true
+            }
+
+            if (is_too_big) {
+                for(const file of files) {
+                    const {path} = file
+                    fs.unlinkSync(path);
+                }
+                return response.status(400).send({message: 'The file is too big'})
+            }
+
             const uploadImage = async (request) => {
                 const uploader = async (path) => await cloudinary.uploads(path, 'socialOC');
                     const urls = [];
-                    const files = request.files;
 
                     if(files.length === 0) return response.status(400).send({message: 'there is no photo uploaded'})
 
@@ -104,12 +119,21 @@ const mainController = {
             const params = request.body;
 
             con.query('SELECT images FROM posts WHERE uuid = ?', [params.uuid], (err, rows) => {
-                console.log(rows)
-                const images = rows[0].images.split(',');
-                images.forEach((item) => {
+                if(rows[0].images.split(',').length > 1) {
+                   const images = rows[0].images.split(',');
+                    
+                    images.forEach((item) => {
+                        const deleter = async (path) => await cloudinary.delete(path);
+                        deleter(`socialOC/${item.split('/')[8].split('.')[0]}`)
+                    })
+                } else {
+                    const images = rows[0].images;
                     const deleter = async (path) => await cloudinary.delete(path);
-                    deleter(`socialOC/${item.split('/')[8].split('.')[0]}`)
-                })
+                    deleter(`socialOC/${images.split('/')[8].split('.')[0]}`)
+                }
+                // return response.status(200).send({
+                //     message: 'Deleted successfully'
+                // })
             });
             con.query('DELETE FROM posts WHERE uuid = ?', [params.uuid], (err, rows) => {
                 if (err) return response.status(400).send({
@@ -181,7 +205,7 @@ const mainController = {
                 message: err
             })
 
-            con.query('SELECT P.uuid, P.user_uuid, P.caption, P.images, P.tagged, P.updated_at, P.created_at FROM posts P JOIN followers F ON P.user_uuid = F.user_followed_uuid AND F.user_follower_uuid = ?', [request.params.user_uuid], (err, rows) => {
+            con.query('SELECT P.uuid, P.user_uuid, P.caption, P.images, P.tagged, P.updated_at, P.created_at FROM posts P JOIN followers F ON P.user_uuid = F.user_followed_uuid AND F.user_follower_uuid = ? ORDER BY created_at DESC', [request.params.user_uuid], (err, rows) => {
                 if (err) return response.status(400).send({
                     message: err
                 });
