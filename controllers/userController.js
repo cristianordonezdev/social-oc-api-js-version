@@ -194,40 +194,38 @@ const controller = {
 
             
             //GET AN ALGORHIT TO MAKE SUGGESTIONS
+
+            //THE LOGIC WILL BE ABLE TO SHOW MY NO FOLLOWERS, HOWEVER IS NOT THE BEST PRACTICE, TRY TO RESOLVE THIS
             const uuid = request.params.uuid;
             
-            con.query('SELECT * FROM followers WHERE NOT user_follower_uuid = ?', [uuid], (err, rows) => {
+            con.query('SELECT U.uuid, U.name, U.nickname, U.profile_image FROM users U JOIN followers F ON U.uuid = F.user_followed_uuid AND F.user_follower_uuid = ?', [uuid], (err, rows) => {
                 if (err) return response.status(400).send({
                     message: err
                 });
-                const followers = rows;
+                const following = rows;
                 con.query('SELECT uuid, name, nickname, profile_image FROM users WHERE NOT uuid = ?', [uuid], (err, rows) => {
                     if (err) return response.status(400).send({
                         message: err
                     });
-                    const not = []
+                    const not_following = []
 
                     rows.forEach((i) => {
                         let you_follow = false;
-                        followers.forEach((j) => {
-                            if ((j.user_follower_uuid !== uuid) && (j.user_followed_uuid === i.uuid)) {
-                                console.log(j.user_followed_uuid, '--', j.user_follower_uuid, '---' , i.uuid)
+                        following.forEach((j) => {
+                            if ((j.uuid === i.uuid)) {
                                 you_follow = true
-                                
                             }
                         })
 
                         if (!you_follow) {
-                            not.push(i)
+                            not_following.push(i)
                         }
                     });
-                    console.log(not)
                     return response.status(200).send({
                         message: 'ok',
+                        not_following
                     });
                 })
-
-
             })
         });
     },
