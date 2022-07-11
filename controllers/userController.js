@@ -184,7 +184,53 @@ const controller = {
                 });
             }
         });
-    }
+    },
+
+    getSuggestions: (request, response) => {
+        request.getConnection((err, con) => {
+            if (err) return response.status(400).send({
+                message: err
+            });
+
+            
+            //GET AN ALGORHIT TO MAKE SUGGESTIONS
+            const uuid = request.params.uuid;
+            
+            con.query('SELECT * FROM followers WHERE NOT user_follower_uuid = ?', [uuid], (err, rows) => {
+                if (err) return response.status(400).send({
+                    message: err
+                });
+                const followers = rows;
+                con.query('SELECT uuid, name, nickname, profile_image FROM users WHERE NOT uuid = ?', [uuid], (err, rows) => {
+                    if (err) return response.status(400).send({
+                        message: err
+                    });
+                    const not = []
+
+                    rows.forEach((i) => {
+                        let you_follow = false;
+                        followers.forEach((j) => {
+                            if ((j.user_follower_uuid !== uuid) && (j.user_followed_uuid === i.uuid)) {
+                                console.log(j.user_followed_uuid, '--', j.user_follower_uuid, '---' , i.uuid)
+                                you_follow = true
+                                
+                            }
+                        })
+
+                        if (!you_follow) {
+                            not.push(i)
+                        }
+                    });
+                    console.log(not)
+                    return response.status(200).send({
+                        message: 'ok',
+                    });
+                })
+
+
+            })
+        });
+    },
 }
 
 module.exports = controller;
