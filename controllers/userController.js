@@ -104,10 +104,23 @@ const controller = {
                     message: err
                 });
 
-                const followers_list = rows.filter((item) => item.uuid !== params.uuid)                
-                return response.status(200).send({
-                    message: 'ok',
-                    followers_list
+                con.query('SELECT U.uuid, U.name, U.nickname, U.profile_image FROM users U JOIN followers F ON U.uuid = F.user_followed_uuid AND F.user_follower_uuid = ?', [params.uuid], (err, rows2) => {
+                    if (err) return response.status(400).send({
+                        message: err
+                    });
+                    const followers_list = rows.filter((item) => item.uuid !== params.uuid)              
+                    const following_list = rows2.filter((item) => item.uuid !== params.uuid) 
+  
+                    followers_list.map((item) => {
+                        if (following_list.find((i) => i.uuid === item.uuid) !== undefined)
+                            item['you_follow'] = true
+                        else 
+                            item['you_follow'] = false
+                    })
+                    return response.status(200).send({
+                        message: 'ok',
+                        followers_list
+                    });
                 });
             })
         });

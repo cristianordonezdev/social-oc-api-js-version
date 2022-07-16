@@ -236,6 +236,78 @@ const mainController = {
 
         });
     },
+
+    getPost: (request, response) => {
+        request.getConnection((err, con) => {
+            if (err) return response.status(400).send({
+                message: err
+            });
+            const uuid = request.params.uuid;
+            con.query('SELECT * FROM posts WHERE uuid = ?', [uuid], (err, rows) => {
+                if (err) return response.status(400).send({
+                    message: err
+                });
+                con.query('SELECT name, profile_image FROM users WHERE uuid = ?', [rows[0].user_uuid], (err, rows2) => {
+                    if (err) return response.status(400).send({
+                        message: err
+                    });
+                    console.log(rows2)
+                    rows[0]['user_name'] = rows2[0].name;
+                    rows[0]['user_profile_image'] = rows2[0].profile_image;
+                                        
+                    return response.status(200).send({
+                        status: 'ok',
+                        rows
+                    }); 
+                });                
+            });
+        });
+    },
+
+    commentPost: (request, response) => {
+        request.getConnection((err, con) => {
+            if (err) return response.status(400).send({
+                message: err
+            }); 
+
+            const body = request.body;
+            const data = {
+                uuid: uuid.v4(),
+                user_uuid: body.user_uuid,
+                post_uuid: body.post_uuid,
+                comment: body.comment,
+                created_at: new Date(),
+                updated_at: new Date(),
+            };
+            con.query('INSERT INTO comments SET ?', [data], (err, rows) => {
+                if (err) return response.status(400).send({message: err});  
+
+                return response.status(200).send({
+                    status: 'ok',
+                    rows
+                }); 
+            })
+        });
+    },
+
+    getPostTagged: (request, response) => {
+        request.getConnection((err, con) => {
+            if (err) return response.status(400).send({
+                message: err
+            });
+            const uuid = request.params.uuid;
+            con.query("SELECT * FROM posts WHERE tagged LIKE  '%" + uuid + "%'", (err, rows) => {
+                if (err) return response.status(400).send({
+                    message: err
+                });
+ 
+                return response.status(200).send({
+                    status: 'ok',
+                    rows
+                }); 
+            });
+        });
+    },
 }
 
 

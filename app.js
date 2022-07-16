@@ -33,12 +33,15 @@ app.use((req, res, next) => {
     res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
     next();
 });
-const cors = require('cors');
-var corsOptions = {
-    origin: '*', // Reemplazar con dominio
-    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-}
-app.use(cors(corsOptions));
+var cors=require('cors');
+
+app.use(cors({origin:true,credentials: true}));
+// const cors = require('cors');
+// var corsOptions = {
+//     origin: '*', // Reemplazar con dominio
+//     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+// }
+// app.use(cors(corsOptions));
 
 // ROUTES
 const middleware_token = require('./middlewares/validateToken');
