@@ -74,7 +74,7 @@ const controller = {
                     user['followers'] = rows.length - 1
                 })
 
-                con.query('SELECT * FROM posts WHERE user_uuid = ? ', [uuid], (err, rows) => {
+                con.query('SELECT * FROM posts WHERE user_uuid = ? ORDER BY created_at DESC', [uuid], (err, rows) => {
                     if (err) return response.status(400).send({
                         message: err
                     });

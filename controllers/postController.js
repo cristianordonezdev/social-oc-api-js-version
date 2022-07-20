@@ -295,7 +295,7 @@ const mainController = {
                 message: err
             });
             const uuid = request.params.uuid;
-            con.query("SELECT * FROM posts WHERE tagged LIKE  '%" + uuid + "%'", (err, rows) => {
+            con.query("SELECT * FROM posts WHERE tagged LIKE  '%" + uuid + "%' ORDER BY created_at DESC", (err, rows) => {
                 if (err) return response.status(400).send({
                     message: err
                 });
