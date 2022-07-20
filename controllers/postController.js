@@ -116,9 +116,8 @@ const mainController = {
             if (err) return response.status(400).send({
                 message: err
             })
-            const params = request.body;
-
-            con.query('SELECT images FROM posts WHERE uuid = ?', [params.uuid], (err, rows) => {
+            const uuid = request.params.uuid;
+            con.query('SELECT images FROM posts WHERE uuid = ?', [uuid], (err, rows) => {
                 if(rows[0].images.split(',').length > 1) {
                    const images = rows[0].images.split(',');
                     
@@ -135,7 +134,7 @@ const mainController = {
                 //     message: 'Deleted successfully'
                 // })
             });
-            con.query('DELETE FROM posts WHERE uuid = ?', [params.uuid], (err, rows) => {
+            con.query('DELETE FROM posts WHERE uuid = ?', [uuid], (err, rows) => {
                 if (err) return response.status(400).send({
                     message: err
                 })

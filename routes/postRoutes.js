@@ -14,6 +14,6 @@ router.get('/get-posts-followers/:user_uuid', controller.getPostFollowers);
 router.get('/get-posts-tagged/:uuid', controller.getPostTagged); 
 router.get('/get-post/:uuid', controller.getPost);
 router.put('/edit-post', controller.editPost);
-router.delete('/delete-post', controller.deletePost);
+router.delete('/delete-post/:uuid', controller.deletePost);
 
 module.exports = router;
