@@ -140,10 +140,15 @@ const controller = {
                     message: err
                 });
 
-                const followers_list = rows.filter((item) => item.uuid !== params.uuid)                
+                const following_list = rows.filter((item) => item.uuid !== params.uuid)              
+
+                following_list.map((item) => {
+                    item['you_follow'] = true
+                })
+
                 return response.status(200).send({
                     message: 'ok',
-                    followers_list
+                    following_list
                 });
             })
         });
