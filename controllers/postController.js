@@ -75,13 +75,20 @@ const mainController = {
                         images: images_urls.toString()
                     }
                     con.query('UPDATE posts SET ? WHERE uuid = ?', [post_updated, new_post.uuid])
-
-                    return response.status(200).send({
-                        message: 'added post',
-                        rows
+                    
+                    con.query('SELECT name, profile_image FROM users WHERE uuid = ?', [request.body.user_uuid], (err, rows2) => {
+                        if (err) return response.status(400).send({
+                            message: err
+                        })
+                        new_post.images = post_updated.images;
+                        new_post['user_name'] = rows2[0].name;
+                        new_post['user_profile_img'] = rows2[0].profile_image
+                        return response.status(200).send({
+                            message: 'added post',
+                            new_post
+                        });
                     });
-                })
-
+                });
             });
 
         });
@@ -159,7 +166,6 @@ const mainController = {
                 if (err) return response.status(400).send({
                     message: err
                 })
-
                 if (rows.length >= 1) {
 
                     con.query('DELETE FROM likes WHERE post_uuid = ? and user_uuid = ? ', [params.post_uuid, params.user_uuid], (err, rows) => {
@@ -178,6 +184,7 @@ const mainController = {
                         uuid: uuid.v4(),
                         post_uuid: params.post_uuid,
                         user_uuid: params.user_uuid,
+                        type_like: params.type_like,
                         created_at: new Date()
                     }
         
@@ -216,18 +223,25 @@ const mainController = {
                         if (err) return response.status(400).send({
                             message: err
                         });
-                        
-                        item['user_name'] = rows2[0].name;
-                        item['user_profile_image'] = rows2[0].profile_image;
-                        new_rows.push(item)
-                        counter += 1 
-                        
-                        if(rows.length === counter) {
-                            return response.status(200).send({
-                                status: 'ok',
-                                new_rows
-                            });
-                        } 
+
+                        con.query('SELECT user_uuid FROM likes WHERE post_uuid = ?', [item.uuid], (err, rows3) => {
+                            if (rows3.length === 1) {
+                              item['you_like_post'] = true;
+                            } else {
+                              item['you_like_post'] = false;
+                            }
+                            item['user_name'] = rows2[0].name;
+                            item['user_profile_image'] = rows2[0].profile_image;
+                            new_rows.push(item)
+                            counter += 1 
+                            
+                            if(rows.length === counter) {
+                                return response.status(200).send({
+                                    status: 'ok',
+                                    new_rows
+                                });
+                            } 
+                        });
                     })
 
                 })          
@@ -250,7 +264,6 @@ const mainController = {
                     if (err) return response.status(400).send({
                         message: err
                     });
-                    console.log(rows2)
                     rows[0]['user_name'] = rows2[0].name;
                     rows[0]['user_profile_image'] = rows2[0].profile_image;
                                         
