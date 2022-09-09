@@ -58,7 +58,8 @@ const controller = {
                 message: err
             });
 
-            const uuid = request.params.uuid;
+            const uuid = request.body.uuid;
+            const own_user_uuid = request.body.own_user_uuid;
 
             con.query('SELECT * FROM users WHERE uuid = ? ', [uuid], (err, rows) => {
                 if (err) return response.status(400).send({
@@ -69,10 +70,13 @@ const controller = {
 
                 con.query('SELECT * FROM followers WHERE user_follower_uuid = ? ', [uuid], (err, rows) => {
                     user['following'] = rows.length - 1
-                })
+                });
                 con.query('SELECT * FROM followers WHERE user_followed_uuid = ? ', [uuid], (err, rows) => {
                     user['followers'] = rows.length - 1
-                })
+                });
+                con.query('SELECT user_followed_uuid FROM followers WHERE user_follower_uuid = ? ', [own_user_uuid], (err, results) => {
+                    user['you_follow'] = results.find((obj) => obj.user_followed_uuid === uuid) !== undefined;
+                });
 
                 con.query('SELECT * FROM posts WHERE user_uuid = ? ORDER BY created_at DESC', [uuid], (err, rows) => {
                     if (err) return response.status(400).send({

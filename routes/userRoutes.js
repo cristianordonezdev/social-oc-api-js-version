@@ -7,7 +7,7 @@ const controller = require('../controllers/userController');
 
 // router.post('/upload-post', upload.array('images'), controller.uploadPost);
 router.post('/follow', controller.follow);
-router.get('/get-user/:uuid', controller.getUser);
+router.post('/get-user', controller.getUser);
 router.get('/followers-list/:uuid', controller.followersList);
 router.get('/following-list/:uuid', controller.followingList);
 router.get('/suggestions/:uuid', controller.getSuggestions);
