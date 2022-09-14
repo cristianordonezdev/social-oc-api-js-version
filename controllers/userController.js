@@ -270,17 +270,24 @@ const controller = {
             fs.unlinkSync(path);
             return url;
         };
-
-        uploadImage().then((response_upload) => {
-          const obj_updated = {
-            profile_image: response_upload.url,
-          };
-          con.query('UPDATE users SET ? WHERE uuid = ?', [obj_updated, user_uuid], (err, res_updated) => {
-            return response.status(200).send({
-                message: 'The profile picture has been uploaded',
-                profile_image: response_upload.url
+        
+        con.query('SELECT profile_image FROM users WHERE uuid = ?', [user_uuid], (err, res_user) => {
+            const {profile_image} = res_user[0];
+            if (profile_image !== null) {
+              const deleter = async (path) => await cloudinary.delete(path);
+              deleter(`socialOC/${profile_image.split('/')[8].split('.')[0]}`);
+            }
+            uploadImage().then((response_upload) => {
+              const obj_updated = {
+                profile_image: response_upload.url,
+              };
+              con.query('UPDATE users SET ? WHERE uuid = ?', [obj_updated, user_uuid], (err, res_updated) => {
+                return response.status(200).send({
+                  message: 'The profile picture has been uploaded',
+                  profile_image: response_upload.url
+                });
+              });
             });
-          });
         });
       });
     },
