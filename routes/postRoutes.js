@@ -9,6 +9,7 @@ router.get('/', controller.dashboard);
 router.post('/upload-post', upload.array('images'), controller.uploadPost);
 router.post('/like', controller.like);
 router.post('/comment-post', controller.commentPost);
+router.delete('/delete-comment-post/:uuid', controller.deleteCommentPost);
 
 router.get('/get-posts-followers/:user_uuid', controller.getPostFollowers);
 router.get('/get-posts-tagged/:uuid', controller.getPostTagged); 
