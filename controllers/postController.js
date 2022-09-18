@@ -271,9 +271,10 @@ const mainController = {
                           con.query('SELECT profile_image FROM users WHERE uuid = ? ', [item.user_uuid], (err, image) => {
                             item['user_profile_image'] = image[0].profile_image;
                             if (index === comments_response.length - 1) {
+                                rows[0]['comments'] = comments_response;
                                 return response.status(200).send({
                                     status: 'ok',
-                                    comments_response
+                                    rows
                                 });  
                             }
                           });
