@@ -312,10 +312,14 @@ const mainController = {
             con.query('INSERT INTO comments SET ?', [data], (err, rows) => {
                 if (err) return response.status(400).send({message: err});  
 
-                return response.status(200).send({
-                    status: 'ok',
-                    rows
-                }); 
+                con.query('SELECT name, profile_image FROM users WHERE uuid = ?', [data.user_uuid], (err, user_data) => {
+                    data['user_name'] = user_data[0].name;
+                    data['user_profile_image'] = user_data[0].profile_image;
+                    return response.status(200).send({
+                        status: 'ok',
+                        data
+                    }); 
+                })
             })
         });
     },
