@@ -266,11 +266,19 @@ const mainController = {
                     });
                     rows[0]['user_name'] = rows2[0].name;
                     rows[0]['user_profile_image'] = rows2[0].profile_image;
-                                        
-                    return response.status(200).send({
-                        status: 'ok',
-                        rows
-                    }); 
+                    con.query('SELECT * FROM comments WHERE post_uuid = ?', [rows[0].uuid], (err, comments_response) => {
+                        comments_response.map((item, index) => {
+                          con.query('SELECT profile_image FROM users WHERE uuid = ? ', [item.user_uuid], (err, image) => {
+                            item['user_profile_image'] = image[0].profile_image;
+                            if (index === comments_response.length - 1) {
+                                return response.status(200).send({
+                                    status: 'ok',
+                                    comments_response
+                                });  
+                            }
+                          });
+                        });
+                    });
                 });                
             });
         });
@@ -287,6 +295,7 @@ const mainController = {
                 uuid: uuid.v4(),
                 user_uuid: body.user_uuid,
                 post_uuid: body.post_uuid,
+                comment_related_uuid: body.comment_related_uuid,
                 comment: body.comment,
                 created_at: new Date(),
                 updated_at: new Date(),
@@ -297,6 +306,25 @@ const mainController = {
                 return response.status(200).send({
                     status: 'ok',
                     rows
+                }); 
+            })
+        });
+    },
+
+    deleteCommentPost: (request, response) => {
+        request.getConnection((err, con) => {
+            if (err) return response.status(400).send({
+                message: err
+            }); 
+
+            const uuid = request.params.uuid;
+
+            con.query('DELETE FROM comments WHERE uuid =  ?', [uuid], (err, rows) => {
+                if (err) return response.status(400).send({message: err});  
+
+                return response.status(200).send({
+                    status: 'ok',
+                    message: 'The comment has been deleted successfully',
                 }); 
             })
         });
