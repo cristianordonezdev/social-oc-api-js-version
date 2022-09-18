@@ -275,8 +275,9 @@ const mainController = {
                           });     
                         }
                         comments_response.map((item, index) => {
-                          con.query('SELECT profile_image FROM users WHERE uuid = ? ', [item.user_uuid], (err, image) => {
+                          con.query('SELECT profile_image, name FROM users WHERE uuid = ? ', [item.user_uuid], (err, image) => {
                             item['user_profile_image'] = image[0].profile_image;
+                            item['user_name'] = image[0].name;
                             if (index === comments_response.length - 1) {
                                 rows[0]['comments'] = comments_response;
                                 return response.status(200).send({
