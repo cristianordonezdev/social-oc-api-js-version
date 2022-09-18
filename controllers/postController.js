@@ -267,6 +267,13 @@ const mainController = {
                     rows[0]['user_name'] = rows2[0].name;
                     rows[0]['user_profile_image'] = rows2[0].profile_image;
                     con.query('SELECT * FROM comments WHERE post_uuid = ?', [rows[0].uuid], (err, comments_response) => {
+                        console.log(comments_response)
+                        if (comments_response.length === 0) {
+                          return response.status(200).send({
+                            status: 'ok',
+                            rows
+                          });     
+                        }
                         comments_response.map((item, index) => {
                           con.query('SELECT profile_image FROM users WHERE uuid = ? ', [item.user_uuid], (err, image) => {
                             item['user_profile_image'] = image[0].profile_image;
