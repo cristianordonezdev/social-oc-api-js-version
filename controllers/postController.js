@@ -315,6 +315,7 @@ const mainController = {
                 con.query('SELECT name, profile_image FROM users WHERE uuid = ?', [data.user_uuid], (err, user_data) => {
                     data['user_name'] = user_data[0].name;
                     data['user_profile_image'] = user_data[0].profile_image;
+                    data['user_nickname'] = user_data[0].nickname;
                     return response.status(200).send({
                         status: 'ok',
                         data
