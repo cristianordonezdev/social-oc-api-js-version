@@ -267,7 +267,6 @@ const mainController = {
                     rows[0]['user_name'] = rows2[0].name;
                     rows[0]['user_profile_image'] = rows2[0].profile_image;
                     con.query('SELECT * FROM comments WHERE post_uuid = ?', [rows[0].uuid], (err, comments_response) => {
-                        console.log(comments_response)
                         if (comments_response.length === 0) {
                           return response.status(200).send({
                             status: 'ok',
@@ -275,9 +274,10 @@ const mainController = {
                           });     
                         }
                         comments_response.map((item, index) => {
-                          con.query('SELECT profile_image, name FROM users WHERE uuid = ? ', [item.user_uuid], (err, image) => {
+                          con.query('SELECT profile_image, name, nickname FROM users WHERE uuid = ? ', [item.user_uuid], (err, image) => {
                             item['user_profile_image'] = image[0].profile_image;
                             item['user_name'] = image[0].name;
+                            item['user_nickname'] = image[0].nickname;
                             if (index === comments_response.length - 1) {
                                 rows[0]['comments'] = comments_response;
                                 return response.status(200).send({
@@ -315,7 +315,6 @@ const mainController = {
                 con.query('SELECT name, profile_image FROM users WHERE uuid = ?', [data.user_uuid], (err, user_data) => {
                     data['user_name'] = user_data[0].name;
                     data['user_profile_image'] = user_data[0].profile_image;
-                    data['user_nickname'] = user_data[0].nickname;
                     return response.status(200).send({
                         status: 'ok',
                         data
