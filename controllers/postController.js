@@ -266,7 +266,7 @@ const mainController = {
                     });
                     rows[0]['user_name'] = rows2[0].name;
                     rows[0]['user_profile_image'] = rows2[0].profile_image;
-                    con.query('SELECT * FROM comments WHERE post_uuid = ?', [rows[0].uuid], (err, comments_response) => {
+                    con.query('SELECT * FROM comments WHERE post_uuid = ? ORDER BY created_at', [rows[0].uuid], (err, comments_response) => {
                         if (comments_response.length === 0) {
                           return response.status(200).send({
                             status: 'ok',
