@@ -279,7 +279,7 @@ const mainController = {
                             item['user_name'] = image[0].name;
                             item['user_nickname'] = image[0].nickname;
                             if (index === comments_response.length - 1) {
-                                rows[0]['comments'] = comments_response;
+                                rows[0]['comments'] = formatSubcomments(comments_response);
                                 return response.status(200).send({
                                     status: 'ok',
                                     rows
@@ -292,7 +292,6 @@ const mainController = {
             });
         });
     },
-
     commentPost: (request, response) => {
         request.getConnection((err, con) => {
             if (err) return response.status(400).send({
@@ -361,6 +360,19 @@ const mainController = {
             });
         });
     },
+}
+
+const formatSubcomments = (comments) => {
+  comments.forEach((i) => {
+    comments.forEach((j) => {
+      const comments_related = [];
+      if (i.uuid === j.comment_related_uuid) {
+        comments_related.push(j);
+        i.related_comment = comments_related;
+      }
+    });
+  });
+  return comments.filter((item) => item.comment_related_uuid === null);
 }
 
 
