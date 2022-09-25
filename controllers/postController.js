@@ -364,8 +364,8 @@ const mainController = {
 
 const formatSubcomments = (comments) => {
   comments.forEach((i) => {
+    const comments_related = [];
     comments.forEach((j) => {
-      const comments_related = [];
       if (i.uuid === j.comment_related_uuid) {
         comments_related.push(j);
         i.related_comments = comments_related;
