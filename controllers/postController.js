@@ -368,7 +368,7 @@ const formatSubcomments = (comments) => {
       const comments_related = [];
       if (i.uuid === j.comment_related_uuid) {
         comments_related.push(j);
-        i.related_comment = comments_related;
+        i.related_comments = comments_related;
       }
     });
   });
