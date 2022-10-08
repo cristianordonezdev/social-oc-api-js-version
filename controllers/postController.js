@@ -266,16 +266,32 @@ const mainController = {
                     });
                     rows[0]['user_name'] = rows2[0].name;
                     rows[0]['user_profile_image'] = rows2[0].profile_image;
-                                        
-                    return response.status(200).send({
-                        status: 'ok',
-                        rows
-                    }); 
+                    con.query('SELECT * FROM comments WHERE post_uuid = ? ORDER BY created_at', [rows[0].uuid], (err, comments_response) => {
+                        if (comments_response.length === 0) {
+                          return response.status(200).send({
+                            status: 'ok',
+                            rows
+                          });     
+                        }
+                        comments_response.map((item, index) => {
+                          con.query('SELECT profile_image, name, nickname FROM users WHERE uuid = ? ', [item.user_uuid], (err, image) => {
+                            item['user_profile_image'] = image[0].profile_image;
+                            item['user_name'] = image[0].name;
+                            item['user_nickname'] = image[0].nickname;
+                            if (index === comments_response.length - 1) {
+                                rows[0]['comments'] = formatSubcomments(comments_response);
+                                return response.status(200).send({
+                                    status: 'ok',
+                                    rows
+                                });  
+                            }
+                          });
+                        });
+                    });
                 });                
             });
         });
     },
-
     commentPost: (request, response) => {
         request.getConnection((err, con) => {
             if (err) return response.status(400).send({
@@ -287,6 +303,7 @@ const mainController = {
                 uuid: uuid.v4(),
                 user_uuid: body.user_uuid,
                 post_uuid: body.post_uuid,
+                comment_related_uuid: body.comment_related_uuid,
                 comment: body.comment,
                 created_at: new Date(),
                 updated_at: new Date(),
@@ -294,9 +311,33 @@ const mainController = {
             con.query('INSERT INTO comments SET ?', [data], (err, rows) => {
                 if (err) return response.status(400).send({message: err});  
 
+                con.query('SELECT name, profile_image, nickname FROM users WHERE uuid = ?', [data.user_uuid], (err, user_data) => {
+                    data['user_name'] = user_data[0].name;
+                    data['user_profile_image'] = user_data[0].profile_image;
+                    data['user_nickname'] = user_data[0].nickname;
+                    return response.status(200).send({
+                        status: 'ok',
+                        data
+                    }); 
+                })
+            })
+        });
+    },
+
+    deleteCommentPost: (request, response) => {
+        request.getConnection((err, con) => {
+            if (err) return response.status(400).send({
+                message: err
+            }); 
+
+            const uuid = request.params.uuid;
+
+            con.query('DELETE FROM comments WHERE uuid =  ?', [uuid], (err, rows) => {
+                if (err) return response.status(400).send({message: err});  
+
                 return response.status(200).send({
                     status: 'ok',
-                    rows
+                    message: 'The comment has been deleted successfully',
                 }); 
             })
         });
@@ -320,6 +361,19 @@ const mainController = {
             });
         });
     },
+}
+
+const formatSubcomments = (comments) => {
+  comments.forEach((i) => {
+    const comments_related = [];
+    comments.forEach((j) => {
+      if (i.uuid === j.comment_related_uuid) {
+        comments_related.push(j);
+        i.related_comments = comments_related;
+      }
+    });
+  });
+  return comments.filter((item) => item.comment_related_uuid === null);
 }
 
 
