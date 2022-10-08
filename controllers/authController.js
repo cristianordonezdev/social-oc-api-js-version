@@ -103,7 +103,8 @@ const controller = {
                     const is_strong_passoword = !validator.isStrongPassword(params.password);
 
                     if (is_strong_passoword) return response.status(400).send({
-                        message: 'It is not a strong password'
+                        message: 'It is not a strong password',
+                        key: 'not_strong_password'
                     });
 
                     const password_hashed = bcrypt.hashSync(params.password, 10);
@@ -153,11 +154,13 @@ const controller = {
                 } else {
                     if (exist_email) {
                         return response.status(400).send({
-                            message: 'Already exists an email registered'
+                            message: 'Already exists an email registered',
+                            key: 'email_already_used'
                         });
                     }
                     return response.status(400).send({
-                        message: 'Data is incomplete'
+                        message: 'Data is incomplete',
+                        key: 'data_incomplete'
                     });
                 }
             });
