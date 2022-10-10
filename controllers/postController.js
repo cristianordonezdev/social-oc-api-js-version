@@ -210,7 +210,6 @@ const mainController = {
             if (err) return response.status(400).send({
                 message: err
             })
-
             con.query('SELECT P.uuid, P.user_uuid, P.caption, P.images, P.tagged, P.updated_at, P.created_at FROM posts P JOIN followers F ON P.user_uuid = F.user_followed_uuid AND F.user_follower_uuid = ? ORDER BY created_at DESC', [request.params.user_uuid], (err, rows) => {
                 if (err) return response.status(400).send({
                     message: err
@@ -225,7 +224,7 @@ const mainController = {
                         });
 
                         con.query('SELECT user_uuid FROM likes WHERE post_uuid = ?', [item.uuid], (err, rows3) => {
-                            if (rows3.length === 1) {
+                            if (rows3.find((item) => item.user_uuid === request.params.user_uuid) !== undefined) {
                               item['you_like_post'] = true;
                             } else {
                               item['you_like_post'] = false;
@@ -256,6 +255,7 @@ const mainController = {
                 message: err
             });
             const uuid = request.params.uuid;
+            const own_user_uuid = request.params.own_user_uuid;
             con.query('SELECT * FROM posts WHERE uuid = ?', [uuid], (err, rows) => {
                 if (err) return response.status(400).send({
                     message: err
@@ -266,27 +266,45 @@ const mainController = {
                     });
                     rows[0]['user_name'] = rows2[0].name;
                     rows[0]['user_profile_image'] = rows2[0].profile_image;
+                    
+                    con.query('SELECT user_uuid FROM likes WHERE post_uuid = ?', [uuid], (err, user_like) => {
+                      if (user_like.find((item) => item.user_uuid === own_user_uuid) !== undefined) {
+                        rows[0]['you_like_post'] = true;
+                      } else {
+                        rows[0]['you_like_post'] = false;
+                      }
+                    });
                     con.query('SELECT * FROM comments WHERE post_uuid = ? ORDER BY created_at', [rows[0].uuid], (err, comments_response) => {
-                        if (comments_response.length === 0) {
-                          return response.status(200).send({
-                            status: 'ok',
-                            rows
-                          });     
-                        }
-                        comments_response.map((item, index) => {
-                          con.query('SELECT profile_image, name, nickname FROM users WHERE uuid = ? ', [item.user_uuid], (err, image) => {
-                            item['user_profile_image'] = image[0].profile_image;
-                            item['user_name'] = image[0].name;
-                            item['user_nickname'] = image[0].nickname;
-                            if (index === comments_response.length - 1) {
+                        if (comments_response.length > 0) {
+                          comments_response.map((item, index) => {
+                            con.query('SELECT profile_image, name, nickname FROM users WHERE uuid = ? ', [item.user_uuid], (err, image) => {
+                              item['user_profile_image'] = image[0].profile_image;
+                              item['user_name'] = image[0].name;
+                              item['user_nickname'] = image[0].nickname;
+                              if (index === comments_response.length - 1) {
                                 rows[0]['comments'] = formatSubcomments(comments_response);
-                                return response.status(200).send({
-                                    status: 'ok',
-                                    rows
-                                });  
+                              }
+                            });
+                          });
+                        }
+                    });
+                    con.query("SELECT user_uuid FROM likes WHERE post_uuid = ? AND type_like = 'post' ", [uuid], (err, users_uuids) => {
+                      const users_likes = [];
+                      users_uuids.forEach((item, index) => {
+                        con.query('SELECT uuid, name, nickname, profile_image FROM users WHERE uuid = ?', [item.user_uuid], (err, users_data) => {
+                          con.query('SELECT user_followed_uuid FROM followers WHERE user_follower_uuid = ? ', [own_user_uuid], (err, results) => {
+                            users_data[0]['you_follow'] = results.find((obj) => obj.user_followed_uuid === item.user_uuid) !== undefined;
+                            users_likes.push(users_data[0]);
+                            if (index === users_uuids.length - 1) {
+                              rows[0]['likes_users'] = users_likes;
+                              return response.status(200).send({
+                                status: 'ok',
+                                rows
+                              });    
                             }
                           });
                         });
+                      });
                     });
                 });                
             });

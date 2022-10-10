@@ -13,7 +13,7 @@ router.delete('/delete-comment-post/:uuid', controller.deleteCommentPost);
 
 router.get('/get-posts-followers/:user_uuid', controller.getPostFollowers);
 router.get('/get-posts-tagged/:uuid', controller.getPostTagged); 
-router.get('/get-post/:uuid', controller.getPost);
+router.get('/get-post/:uuid/:own_user_uuid', controller.getPost);
 router.put('/edit-post', controller.editPost);
 router.delete('/delete-post/:uuid', controller.deletePost);
 
