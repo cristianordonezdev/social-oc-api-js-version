@@ -92,9 +92,9 @@ const controller = {
             const email = !validator.isEmpty(params.email) && validator.isEmail(params.email);
             let exist_email = false;
 
-            con.query("SELECT * FROM USERS WHERE email = ?", [request.body.email], (err, rows) => {
+            con.query("SELECT * FROM users WHERE email = ?", [request.body.email], (err, rows) => {
                 if (err) return response.status(400).send({
-                    message: err
+                    message: err,
                 })
              
                 if(rows.length >= 1) exist_email = true
