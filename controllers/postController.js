@@ -260,23 +260,19 @@ const mainController = {
                 if (err) return response.status(400).send({
                     message: err
                 });
-                console.log(rows)
                 con.query('SELECT name, profile_image FROM users WHERE uuid = ?', [rows[0].user_uuid], (err, rows2) => {
                     if (err) return response.status(400).send({
                         message: err
                     });
                     rows[0]['user_name'] = rows2[0].name;
                     rows[0]['user_profile_image'] = rows2[0].profile_image;
-                    console.log(rows2)
                     con.query('SELECT user_uuid FROM likes WHERE post_uuid = ?', [uuid], (err, user_like) => {
                       if (user_like.find((item) => item.user_uuid === own_user_uuid) !== undefined) {
                         rows[0]['you_like_post'] = true;
                       } else {
                         rows[0]['you_like_post'] = false;
                       }
-                      console.log(rows)
                     });
-                    console.log(rows)
                     con.query('SELECT * FROM comments WHERE post_uuid = ? ORDER BY created_at', [rows[0].uuid], (err, comments_response) => {
                         if (comments_response.length > 0) {
                           comments_response.map((item, index) => {
@@ -309,11 +305,12 @@ const mainController = {
                             });
                           });
                         });
+                      } else {
+                        return response.status(200).send({
+                          status: 'ok',
+                          rows
+                        }); 
                       }
-                      return response.status(200).send({
-                        status: 'ok',
-                        rows
-                      });
                     });
                 });                
             });
