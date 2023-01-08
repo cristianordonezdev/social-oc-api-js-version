@@ -44,14 +44,13 @@ app.use(cors({origin:true,credentials: true}));
 // app.use(cors(corsOptions));
 
 // ROUTES
-const middleware_token = require('./middlewares/validateToken');
 const auth_routes = require('./routes/authRoutes');
 const post_routes = require('./routes/postRoutes');
 const user_routes = require('./routes/userRoutes');
 
 app.use('/api/auth', auth_routes);
-app.use('/api/dashboard/posts', middleware_token, post_routes);
-app.use('/api/dashboard/user', middleware_token, user_routes);
+app.use('/api/dashboard/posts', post_routes);
+app.use('/api/dashboard/user', user_routes);
 
 // EXPORTING
 module.exports = app;

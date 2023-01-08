@@ -4,7 +4,6 @@ const jwb = require('jsonwebtoken');
 
 const verifyToken = (request, response, next) => {
     const token = request.header('auth-token');
-
     if (!token) return response.status(401).json({error: 'Access denied'})
     try {
         const verified = jwb.verify(token, process.env.TOKEN_SECRET);
