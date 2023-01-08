@@ -19,14 +19,15 @@ const mainController = {
       if (err) return response.status(400).send({
         message: err
       })
-      const params = request.body;
-      con.query('SELECT * FROM likes WHERE post_uuid = ? and user_uuid = ?', [params.post_uuid, params.user_uuid], (err, rows) => {
+      const post_uuid = request.body.post_uuid;
+      const user_uuid = request.user.uuid;
+      con.query('SELECT * FROM likes WHERE post_uuid = ? and user_uuid = ?', [post_uuid, user_uuid], (err, rows) => {
         if (err) return response.status(400).send({
           message: err
         })
         if (rows.length >= 1) {
 
-          con.query('DELETE FROM likes WHERE post_uuid = ? and user_uuid = ? ', [params.post_uuid, params.user_uuid], (err, rows) => {
+          con.query('DELETE FROM likes WHERE post_uuid = ? and user_uuid = ? ', [post_uuid, user_uuid], (err, rows) => {
             if (err) return response.status(400).send({
               message: err
             });
@@ -40,8 +41,8 @@ const mainController = {
         } else {
           const like = {
             uuid: uuid.v4(),
-            post_uuid: params.post_uuid,
-            user_uuid: params.user_uuid,
+            post_uuid: post_uuid,
+            user_uuid: user_uuid,
             type_like: 'post',
             created_at: new Date()
           }
@@ -65,13 +66,14 @@ const mainController = {
         message: err
       })
       const params = request.body;
-      con.query('SELECT * FROM likes WHERE post_uuid = ? and user_uuid = ? and comment_uuid = ?', [params.post_uuid, params.user_uuid, params.comment_uuid], (err, rows) => {
+      const user_uuid = request.user.uuid;
+      con.query('SELECT * FROM likes WHERE post_uuid = ? and user_uuid = ? and comment_uuid = ?', [params.post_uuid, user_uuid, params.comment_uuid], (err, rows) => {
         if (err) return response.status(400).send({
           message: err
         })
         if (rows.length >= 1) {
 
-          con.query('DELETE FROM likes WHERE post_uuid = ? and user_uuid = ? and comment_uuid = ?', [params.post_uuid, params.user_uuid, params.comment_uuid], (err, rows) => {
+          con.query('DELETE FROM likes WHERE post_uuid = ? and user_uuid = ? and comment_uuid = ?', [params.post_uuid, user_uuid, params.comment_uuid], (err, rows) => {
             if (err) return response.status(400).send({
               message: err
             });
@@ -86,7 +88,7 @@ const mainController = {
           const like = {
             uuid: uuid.v4(),
             post_uuid: params.post_uuid,
-            user_uuid: params.user_uuid,
+            user_uuid: user_uuid,
             comment_uuid: params.comment_uuid,
             type_like: 'comment',
             created_at: new Date()
@@ -111,7 +113,7 @@ const mainController = {
         message: err
       });
       const uuid = request.params.uuid;
-      const own_user_uuid = request.params.own_user_uuid;
+      const own_user_uuid = request.user.uuid;
       con.query('SELECT * FROM posts WHERE uuid = ?', [uuid], (err, rows) => {
         if (err) return response.status(400).send({
           message: err
@@ -182,9 +184,10 @@ const mainController = {
       });
 
       const body = request.body;
+      const user_uuid = request.user.uuid;
       const data = {
         uuid: uuid.v4(),
-        user_uuid: body.user_uuid,
+        user_uuid: user_uuid,
         post_uuid: body.post_uuid,
         comment_related_uuid: body.comment_related_uuid,
         comment: body.comment,
@@ -194,7 +197,7 @@ const mainController = {
       con.query('INSERT INTO comments SET ?', [data], (err, rows) => {
         if (err) return response.status(400).send({ message: err });
 
-        con.query('SELECT name, profile_image, nickname FROM users WHERE uuid = ?', [data.user_uuid], (err, user_data) => {
+        con.query('SELECT name, profile_image, nickname FROM users WHERE uuid = ?', [user_uuid], (err, user_data) => {
           data['user_name'] = user_data[0].name;
           data['user_profile_image'] = user_data[0].profile_image;
           data['user_nickname'] = user_data[0].nickname;
@@ -282,7 +285,7 @@ const mainController = {
 
       const new_post = {
         uuid: uuid.v4(),
-        user_uuid: request.body.user_uuid,
+        user_uuid: request.user.uuid,
         caption: (request.body.caption) ? request.body.caption : '',
         images: '',
         created_at: new Date(),
@@ -304,7 +307,7 @@ const mainController = {
           }
           con.query('UPDATE posts SET ? WHERE uuid = ?', [post_updated, new_post.uuid])
 
-          con.query('SELECT name, profile_image FROM users WHERE uuid = ?', [request.body.user_uuid], (err, rows2) => {
+          con.query('SELECT name, profile_image FROM users WHERE uuid = ?', [request.user.uuid], (err, rows2) => {
             if (err) return response.status(400).send({
               message: err
             })
@@ -351,7 +354,7 @@ const mainController = {
       if (err) return response.status(400).send({
         message: err
       })
-      const uuid = request.params.uuid;
+      const uuid = request.params.post_uuid;
       con.query('SELECT images FROM posts WHERE uuid = ?', [uuid], (err, rows) => {
         if (rows[0].images.split(',').length > 1) {
           const images = rows[0].images.split(',');
@@ -386,7 +389,8 @@ const mainController = {
       if (err) return response.status(400).send({
         message: err
       })
-      con.query('SELECT P.uuid, P.user_uuid, P.caption, P.images, P.tagged, P.updated_at, P.created_at FROM posts P JOIN followers F ON P.user_uuid = F.user_followed_uuid AND F.user_follower_uuid = ? ORDER BY created_at DESC', [request.body.user_uuid], (err, rows) => {
+      const user_uuid = request.user.uuid;
+      con.query('SELECT P.uuid, P.user_uuid, P.caption, P.images, P.tagged, P.updated_at, P.created_at FROM posts P JOIN followers F ON P.user_uuid = F.user_followed_uuid AND F.user_follower_uuid = ? ORDER BY created_at DESC', [user_uuid], (err, rows) => {
         if (err) return response.status(400).send({
           message: err
         });
@@ -400,7 +404,7 @@ const mainController = {
             });
 
             con.query('SELECT * FROM likes WHERE post_uuid = ?', [item.uuid], (err, rows3) => {
-              const exist_like = rows3.find((item) => item.user_uuid === request.params.user_uuid)
+              const exist_like = rows3.find((item) => item.user_uuid === user_uuid);
               if (exist_like !== undefined) {
                 item['like_post'] = { like_post: true, uuid: exist_like.uuid };
               } else {

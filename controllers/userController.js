@@ -10,16 +10,17 @@ const controller = {
         message: err
       })
 
-      const params = request.body;
+      const user_followed_uuid = request.body.user_followed_uuid;
+      const user_follower_uuid = request.user.uuid;
 
-      con.query('SELECT * FROM followers WHERE user_follower_uuid = ? and user_followed_uuid = ?', [params.user_follower_uuid, params.user_followed_uuid], (err, rows) => {
+      con.query('SELECT * FROM followers WHERE user_follower_uuid = ? and user_followed_uuid = ?', [user_follower_uuid, user_followed_uuid], (err, rows) => {
         if (err) return response.status(400).send({
           message: err
         })
 
         if (rows.length >= 1) {
 
-          con.query('DELETE FROM followers WHERE user_follower_uuid = ? and user_followed_uuid = ? ', [params.user_follower_uuid, params.user_followed_uuid], (err, rows) => {
+          con.query('DELETE FROM followers WHERE user_follower_uuid = ? and user_followed_uuid = ? ', [user_follower_uuid, user_followed_uuid], (err, rows) => {
             if (err) return response.status(400).send({
               message: err
             })
@@ -33,8 +34,8 @@ const controller = {
         } else {
           const follow = {
             uuid: uuid.v4(),
-            user_follower_uuid: params.user_follower_uuid,
-            user_followed_uuid: params.user_followed_uuid,
+            user_follower_uuid: user_follower_uuid,
+            user_followed_uuid: user_followed_uuid,
           }
 
           con.query('INSERT INTO followers SET ? ', [follow], (err, rows) => {
@@ -46,11 +47,9 @@ const controller = {
               message: 'Following',
               rows
             });
-          })
+          });
         }
-      })
-
-
+      });
     });
   },
 
@@ -60,8 +59,8 @@ const controller = {
         message: err
       });
 
-      const uuid = request.body.uuid;
-      const own_user_uuid = request.body.own_user_uuid;
+      const uuid = request.params.uuid;
+      const own_user_uuid = request.user.uuid;
 
       con.query('SELECT * FROM users WHERE uuid = ? ', [uuid], (err, rows) => {
         if (err) return response.status(400).send({
@@ -167,6 +166,7 @@ const controller = {
       });
 
       const params = request.body;
+      const user_uuid = request.user.uuid;
       const name = (params.name) ? !validator.isEmpty(params.name) : true;
       const lastname = (params.lastname) ? !validator.isEmpty(params.lastname) : true;
       const nickname = (params.nickname) ? !validator.isEmpty(params.nickname) : true;
@@ -192,7 +192,7 @@ const controller = {
           email: params.email,
         };
 
-        con.query('UPDATE users SET ? WHERE uuid = ? ', [user_updated, params.uuid], (err, rows) => {
+        con.query('UPDATE users SET ? WHERE uuid = ? ', [user_updated, user_uuid], (err, rows) => {
           if (err) return response.status(400).send({
             err
           });
@@ -221,14 +221,14 @@ const controller = {
 
       //THE FOLLOWING LOGIC CODE WILL BE ABLE TO SHOW MY NO FOLLOWERS, 
       //HOWEVER IT IS NOT THE BEST PRACTICE, TRY TO RESOLVE THIS
-      const uuid = request.params.uuid;
+      const user_uuid = request.user.uuid;
 
-      con.query('SELECT U.uuid, U.name, U.nickname, U.profile_image FROM users U JOIN followers F ON U.uuid = F.user_followed_uuid AND F.user_follower_uuid = ?', [uuid], (err, rows) => {
+      con.query('SELECT U.uuid, U.name, U.nickname, U.profile_image FROM users U JOIN followers F ON U.uuid = F.user_followed_uuid AND F.user_follower_uuid = ?', [user_uuid], (err, rows) => {
         if (err) return response.status(400).send({
           message: err
         });
         const following = rows;
-        con.query('SELECT uuid, name, nickname, profile_image FROM users WHERE NOT uuid = ?', [uuid], (err, rows) => {
+        con.query('SELECT uuid, name, nickname, profile_image FROM users WHERE NOT uuid = ?', [user_uuid], (err, rows) => {
           if (err) return response.status(400).send({
             message: err
           });
@@ -260,7 +260,7 @@ const controller = {
       if (err) return response.status(400).send({
         message: err
       });
-      const user_uuid = request.body.user_uuid;
+      const user_uuid = request.user.uuid;
       const picture = request.files[0];
       const uploadImage = async () => {
         const uploader = async (path) => await cloudinary.uploads(path, 'socialOC');
@@ -298,7 +298,7 @@ const controller = {
       if (err) return response.status(400).send({
         message: err
       });
-      const user_uuid = request.body.user_uuid;
+      const user_uuid = request.user.uuid;
 
       con.query('SELECT profile_image FROM users WHERE uuid = ?', [user_uuid], (err, rows) => {
         const image = rows[0].profile_image;
