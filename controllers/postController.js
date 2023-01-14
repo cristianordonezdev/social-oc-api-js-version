@@ -1,6 +1,7 @@
 'use strict'
 
 const fs = require('fs');
+const { resourceUsage } = require('process');
 const uuid = require('uuid');
 const cloudinary = require('../middlewares/cloudinary');
 
@@ -33,7 +34,7 @@ const mainController = {
             });
 
             return response.status(200).send({
-              message: 'dislike_post',
+              status: 'dislike_post',
               rows
             });
           });
@@ -52,7 +53,7 @@ const mainController = {
               message: err
             });
             return response.status(200).send({
-              message: 'like_post',
+              status: 'like_post',
               rows
             });
           });
@@ -79,7 +80,7 @@ const mainController = {
             });
 
             return response.status(200).send({
-              message: 'dislike_comment',
+              status: 'dislike_comment',
               rows
             });
           });
@@ -99,7 +100,7 @@ const mainController = {
               message: err
             });
             return response.status(200).send({
-              message: 'like_comment',
+              status: 'like_comment',
               rows
             });
           });
@@ -133,10 +134,10 @@ const mainController = {
             }
           });
           con.query("SELECT user_uuid FROM likes WHERE post_uuid = ? AND type_like = 'post'", [uuid], (err, users_uuids) => {
-            if (own_user_uuid === rows[0].user_uuid) rows[0]['number_likes'] = users_uuids.length;
+            rows[0]['number_likes'] = users_uuids.length;
             if (users_uuids.length > 0) {
               con.query('SELECT uuid, nickname FROM users WHERE uuid = ?', [users_uuids[0].user_uuid], (err, users_data) => {
-                rows[0]['first_user_like'] = users_data;
+                rows[0]['first_user_like'] = users_data[0];
               });
             }
             con.query('SELECT * FROM comments WHERE post_uuid = ? ORDER BY created_at', [rows[0].uuid], (err, comments_response) => {
@@ -214,17 +215,26 @@ const mainController = {
       if (err) return response.status(400).send({
         message: err
       });
-
       const uuid = request.params.uuid;
-
-      con.query('DELETE FROM comments WHERE uuid =  ?', [uuid], (err, rows) => {
-        if (err) return response.status(400).send({ message: err });
-
-        return response.status(200).send({
-          status: 'ok',
-          message: 'The comment has been deleted successfully',
+      const user_uuid = request.user.uuid;
+      con.query('SELECT user_uuid, post_uuid FROM comments WHERE uuid = ?', [uuid], (err, comment) => {
+        con.query('SELECT user_uuid FROM posts WHERE uuid = ?', [comment[0].post_uuid], (err, post) => {
+          if ((comment[0].user_uuid === user_uuid) || post[0].user_uuid === user_uuid) {
+            con.query('DELETE FROM comments WHERE uuid =  ?', [uuid], (err, rows) => {
+              if (err) return response.status(400).send({ message: err });
+      
+              return response.status(200).send({
+                status: 'ok',
+                message: 'The comment has been deleted successfully',
+              });
+            });
+          } else {
+            return response.status(400).send({
+              error: 'Access denied'
+            });
+          }
         });
-      })
+      });
     });
   },
   getPostTagged: (request, response) => {
@@ -245,7 +255,6 @@ const mainController = {
       });
     });
   },
-  
   uploadPost: (request, response) => {
     request.getConnection((err, con) => {
       if (err) return response.status(400).send({
@@ -324,7 +333,6 @@ const mainController = {
 
     });
   },
-
   editPost: (request, response) => {
     request.getConnection((err, con) => {
       if (err) return response.status(400).send({
@@ -348,42 +356,44 @@ const mainController = {
       })
     });
   },
-
   deletePost: (request, response) => {
     request.getConnection((err, con) => {
       if (err) return response.status(400).send({
         message: err
       })
       const uuid = request.params.post_uuid;
-      con.query('SELECT images FROM posts WHERE uuid = ?', [uuid], (err, rows) => {
-        if (rows[0].images.split(',').length > 1) {
-          const images = rows[0].images.split(',');
-
-          images.forEach((item) => {
+      con.query('SELECT images, user_uuid FROM posts WHERE uuid = ?', [uuid], (err, rows) => {
+        if (request.user.uuid === rows[0].user_uuid) {
+          if (rows[0].images.split(',').length > 1) {
+            const images = rows[0].images.split(',');
+  
+            images.forEach((item) => {
+              const deleter = async (path) => await cloudinary.delete(path);
+              deleter(`socialOC/${item.split('/')[8].split('.')[0]}`)
+            })
+          } else {
+            const images = rows[0].images;
             const deleter = async (path) => await cloudinary.delete(path);
-            deleter(`socialOC/${item.split('/')[8].split('.')[0]}`)
-          })
+            deleter(`socialOC/${images.split('/')[8].split('.')[0]}`)
+          }
+          con.query('DELETE FROM posts WHERE uuid = ?', [uuid], (err, rows) => {
+            if (err) return response.status(400).send({
+              message: err
+            })
+            return response.status(200).send({
+              message: 'Deleted successfully'
+            })
+          });
+
         } else {
-          const images = rows[0].images;
-          const deleter = async (path) => await cloudinary.delete(path);
-          deleter(`socialOC/${images.split('/')[8].split('.')[0]}`)
+          return response.status(400).send({
+            error: 'Access denied'
+          });
         }
-        // return response.status(200).send({
-        //     message: 'Deleted successfully'
-        // })
       });
-      con.query('DELETE FROM posts WHERE uuid = ?', [uuid], (err, rows) => {
-        if (err) return response.status(400).send({
-          message: err
-        })
-        return response.status(200).send({
-          message: 'Deleted successfully'
-        })
-      })
 
     });
-  },
-  
+  }, 
   getPostFollowers: (request, response) => {
     request.getConnection((err, con) => {
       if (err) return response.status(400).send({
@@ -429,6 +439,35 @@ const mainController = {
 
     });
   },
+  getUsersLikes: (request, response) => {
+    request.getConnection((err, con) => {
+      if (err) return response.status(400).send({
+        message: err
+      });
+
+      const type = request.params.type;
+      const uuid = request.params.uuid;
+      const own_user = request.user.uuid;
+
+      con.query(`SELECT user_uuid FROM likes WHERE ${type === 'post' ? 'post_uuid' : 'comment_uuid'} = ? AND type_like = ?`, [uuid, type], (err, users_uuid) => {
+        const users = [];
+        users_uuid.map((u, index) => {
+          con.query('SELECT uuid, nickname, name, profile_image FROM users WHERE uuid = ?', [u.user_uuid], (err, user) => {
+            con.query('SELECT user_followed_uuid FROM followers WHERE user_follower_uuid = ? ', [own_user], (err, following) => {
+              user[0]['you_follow'] = following.find((obj) => obj.user_followed_uuid === user[0].uuid) !== undefined;
+              users.push(user[0]);
+              if (index === users_uuid.length - 1) {
+                return response.status(200).send({
+                  status: 'ok',
+                  users,
+                }); 
+              }
+            });
+          });
+        });
+      });
+    });
+  }
 }
 
 const formatSubcomments = (comments) => {
