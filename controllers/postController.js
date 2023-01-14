@@ -1,7 +1,6 @@
 'use strict'
 
 const fs = require('fs');
-const { resourceUsage } = require('process');
 const uuid = require('uuid');
 const cloudinary = require('../middlewares/cloudinary');
 
