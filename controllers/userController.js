@@ -89,7 +89,7 @@ const controller = {
             status: 'ok',
             user
           });
-        })
+        });
       })
 
     });

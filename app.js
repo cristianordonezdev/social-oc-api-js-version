@@ -3,6 +3,7 @@
 // IMPORTING
 const express = require('express');
 const app = express();
+const cors = require('cors');
 const body_parser = require('body-parser');
 const mysql = require('mysql');
 const express_myconnection = require('express-myconnection');
@@ -26,16 +27,17 @@ app.use(body_parser.json());
 app.use(express_myconnection(mysql, db, 'single'));
 
 // CORS
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-    res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
-    next();
-});
-var cors=require('cors');
+// app.use((req, res, next) => {
+//     res.header('Access-Control-Allow-Origin', '*');
+//     res.header('Access-Control-Allow-Headers', 'Authorization, X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Allow-Request-Method');
+//     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+//     res.header('Allow', 'GET, POST, OPTIONS, PUT, DELETE');
+//     next();
+// });
 
-app.use(cors({origin:true,credentials: true}));
+app.use(cors({origin: 'http://localhost:8080'}));
+
+// app.use(cors({origin:true,credentials: true}));
 // const cors = require('cors');
 // var corsOptions = {
 //     origin: '*', // Reemplazar con dominio
