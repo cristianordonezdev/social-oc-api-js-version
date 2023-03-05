@@ -14,7 +14,8 @@ router.get('/get-user/:uuid', verify_token,controller.getUser);
 router.post('/follow', verify_token,controller.follow);
 router.post('/upload-profile-picture', upload.array('picture'), verify_token, controller.uploadProfilePicture);
 
-router.put('/delete-profile-picture', verify_token, controller.deleteProfilePicture);
 router.put('/edit-user', verify_token, controller.editUser);
+
+router.delete('/delete-profile-picture', verify_token, controller.deleteProfilePicture);
 
 module.exports = router;
