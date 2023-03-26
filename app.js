@@ -35,7 +35,8 @@ app.use(express_myconnection(mysql, db, 'single'));
 //     next();
 // });
 
-app.use(cors({origin: 'http://localhost:8080'}));
+const allowed_origins = ['http://localhost:8080', 'http://socialoc.com:8080'];
+app.use(cors({origin: allowed_origins}));
 
 // app.use(cors({origin:true,credentials: true}));
 // const cors = require('cors');
