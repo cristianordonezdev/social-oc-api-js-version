@@ -321,7 +321,7 @@ const mainController = {
             })
             new_post.images = post_updated.images;
             new_post['user_name'] = rows2[0].name;
-            new_post['user_profile_img'] = rows2[0].profile_image
+            new_post['user_profile_image'] = rows2[0].profile_image
             return response.status(200).send({
               message: 'added post',
               new_post
