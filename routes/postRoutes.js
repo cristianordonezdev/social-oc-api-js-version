@@ -18,6 +18,7 @@ router.post('/comment-post', verify_token,controller.commentPost);
 router.post('/upload-post', upload.array('images'), verify_token, controller.uploadPost);
 
 router.put('/edit-post', verify_token,controller.editPost);
+router.put('/edit-comment', verify_token,controller.editComment);
 
 router.delete('/delete-post/:post_uuid', verify_token,controller.deletePost);
 router.delete('/delete-comment-post/:uuid', verify_token, controller.deleteCommentPost);
