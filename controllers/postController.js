@@ -355,6 +355,39 @@ const mainController = {
       })
     });
   },
+  editComment: (request, response) => {
+    request.getConnection((err, con) => {
+      if (err) return response.status(400).send({
+        message: err
+      })
+      const body = request.body;
+      const comment = {
+        comment: body.comment ? body.comment : null,
+        updated_at: new Date()
+      }
+      con.query('SELECT * FROM comments WHERE uuid = ?', [body.uuid], (err, rows) => {
+        if (err) return response.status(400).send({
+          message: err
+        })
+        if (request.user.uuid === rows[0].user_uuid) {
+          con.query('UPDATE comments SET ? WHERE uuid = ?', [comment, body.uuid], (err, rows_updated) => {
+            if (err) return response.status(400).send({
+              message: err
+            })
+            console.log(comment)
+            return response.status(200).send({
+              rows_updated,
+              comment
+            })
+          });
+        } else {
+          return response.status(400).send({
+            error: 'Access denied'
+          });
+        }
+      });
+    });
+  },
   deletePost: (request, response) => {
     request.getConnection((err, con) => {
       if (err) return response.status(400).send({
